@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+    <!--
+
+        MyBatis 编写标签的时候是有先后顺序的，不能随便编写。
+
+        properties >  settings >  typeAliases  ...  具体的参照官网。
+
+
+      -->
+
+
+    <!--  使用 properties 标签引入外部文件，可以使用 ${xxx} 来引用 properties 中的属性   -->
+    <!--    外部文件的优先级要高于 property 标签指定的属性名-->
+    <properties resource="jdbc.properties">
+        <property name="mysql.dev.driver" value="123"/>
+
+    </properties>
+
+
+    <!--  config 默认属性设置  -->
+    <settings>
+        <!--        开启骆驼命名法 默认值为：false-->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        <!--    全局地开启或关闭配置文件中的所有映射器已经配置的任何缓存。   -->
+        <setting name="cacheEnabled" value="trie"/>
+
+        <!--   延迟加载的全局开关。 开启时，所有关联对象都会延迟加载。 特定关联关系中可通过设置 fetchType 属性来覆盖该项的开关状态     -->
+        <setting name="lazyLoadingEnabled" value="true"/>
+    </settings>
+
+    <!--    别名处理器，可以为 java 类型设置别名，然后在 mapper 映射文件中，可以直接使用别名来代替全类名-->
+    <typeAliases>
+        <!--        <typeAlias type="Employee" alias="employee" />-->
+        <!--        如果 alias 属性不指定的话，默认为 类名（不区分大小写）-->
+        <!--        <typeAlias type="Employee"/>-->
+        <!--    可以指定直接指定某个包下，别名默认为：类名（不区分大小写）   -->
+        <package name="mapper.entity"/>
+    </typeAliases>
+
+    <!--  环境配置 environments。type：都是注册在 Configuration 类中的别名
+          environment：配置一个具体的环境信息，必须包含 transactionManager 和 dataSource 两个标签。id：环境的唯一表示名称
+            transactionManager：事务管理器。
+                type：事务管理器类型 JDBC（JdbcTransactionFactory） | MANAGED（ManagedTransactionFactory）
+                    自定义事务管理器你：实现 TransactionFactory 接口，type 指定全类名
+            dataSource：数据源
+                type：数据源类型 UNPOOLED（UnpooledDataSourceFactory） | POOLED（PooledDataSourceFactory） | JNDI（JndiDataSourceFactory）
+                自定义数据源：实现 DataSourceFactory 接口即可 ， type 指定全类名
+       -->
+    <environments default="dev">
+
+        <!--        <environment id="test">-->
+        <!--            <transactionManager type="JDBC"></transactionManager>-->
+        <!--            <dataSource type="POOLED">-->
+        <!--                <property name="driver" value="${mysql.dev.driver}"/>-->
+        <!--                <property name="url" value="${mysql.dev.url}"/>-->
+        <!--                <property name="username" value="${mysql.dev.username}"/>-->
+        <!--                <property name="password" value="${mysql.dev.password}"/>-->
+        <!--            </dataSource>-->
+        <!--        </environment>-->
+
+        <environment id="dev">
+            <transactionManager type="JDBC"/>
+            <dataSource type="POOLED">
+                <property name="driver" value="${mysql.dev.driver}"/>
+                <property name="url" value="${mysql.dev.url}"/>
+                <property name="username" value="${mysql.dev.username}"/>
+                <property name="password" value="${mysql.dev.password}"/>
+            </dataSource>
+            <!--            <dataSource type="POOLED">-->
+            <!--                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>-->
+            <!--                <property name="url" value="jdbc:mysql://localhost:3306/config?serverTimezone=UTC"/>-->
+            <!--                <property name="username" value="root"/>-->
+            <!--                <property name="password" value="123456"/>-->
+            <!--            </dataSource>-->
+        </environment>
+    </environments>
+
+    <!-- databaseIdProvider：支持多数据库厂商，用来切换数据库厂商
+            property 标签 name：数据库厂商名称  value：数据库厂商别名
+                数据库厂商的名称：MySQL（注意 y 小写 ，找错误找了半天）、Oracle、SQL Server
+
+         如果指定了明确的：databaseIdProvider ，那么 Mapper.xml 中会加载明确标识该数据库厂商的SQL，如果没有才会加载没有指定数据库厂商的SQL
+
+       -->
+    <databaseIdProvider type="DB_VENDOR">
+        <property name="MySQL" value="mysql"/>
+    </databaseIdProvider>
+
+    <!--  将我们写的 SQL 映射文件（EmployeeMapper.xml），一定要注册到 mybatis 的全局配置文件（mybatis-config.xml）中 -->
+    <mappers>
+        <!--
+            mapper：注册一个 SQL 映射文件
+               resource：使用相对于类路径的资源引用
+               url：使用完全限定资源定位符（URL）
+               class:使用映射器接口实现类的完全限定类名 （config.mapper.EmployeeMapper）： 使用注解版，将 CRUD 用注解标注在接口上
+
+            package：指定某个包下的接口包。此时接口（config.mapper.EmployeeMapper）所在的目录一定要和 SQL 映射文件（config/mapper/EmployeeMapper.xml）的目录相同并且同名。
+
+             -->
+        <!--        <mapper resource="config/mapper/EmployeeMapper.xml" />-->
+
+        <package name="mapper.mapper"/>
+    </mappers>
+</configuration>
