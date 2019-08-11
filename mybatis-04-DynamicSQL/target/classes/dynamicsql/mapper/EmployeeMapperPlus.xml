@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--  指定所绑定的接口引用路径  -->
+<mapper namespace="dynamicsql.mapper.EmployeeMapperPlus">
+
+    <!--
+        resultMap：封装复杂类型的结果集。
+            属性：
+                id：引用的唯一标识
+                type：指定封装对象的全类名。
+                autoMapping：true | false 如果设置这个属性，MyBatis将会为本结果映射开启或者关闭自动映射。
+                                这个属性会覆盖全局的属性 autoMappingBehavior。默认值：未设置（unset）
+            子标签：
+                id：一个 id 结果；标记出作为 id 的结果可以帮助提高整体性能
+                result：数据库字段和 JavaBean 字段的映射
+                    属性：
+                        property：javabean 的字段名称，如果是级联查询，可以设置级联属性的字段 ex：dept.deptName
+                        column：数据库对应的列名
+                        jdbcType：字段对应 jdbc 所使用的的类型，参考枚举： org.apache.ibatis.type.JdbcType
+                        javaType：字段对应 Java 中的类型，可以指定全类名或者别名。
+                        typeHandler：可以指定类型处理器。一般可以指定全类名或者别名。
+                association：嵌套结果映射 – 关联本身可以是一个 resultMap 元素，或者从别处引用一个
+                    属性：
+                        property：级联属性的字段名称 ep：dept
+                        resultMap：可以直接引用指定类型的 resultMap ID
+                        select：分步查询。可以直接引用，一个 select 标签的id
+                        column：指定 select 引用时，传递的参数。column="did"  多个参数：column="{id=did}"
+                        fetchType：延迟加载。只又分步查询时才能生效。这个属性会覆盖全局配置的：lazyLoadingEnabled
+                            lazy ：延迟加载
+                            eager：理解加载
+                        columnPrefix：当连接多个表时，你可能会不得不使用列别名来避免在 ResultSet 中产生重复的列名。
+                                            指定 columnPrefix 列名前缀允许你将带有这些前缀的列映射到一个外部的结果映射中。
+
+                collection：级联属性-集合  和 association 中共有的标签含义一样。不再一一列举
+                    属性：
+                        property：级联属性对应的属性 ep：emps
+                        ofType：集合中 Javabean 的类型。 ofType | resultMap 指定一个即可
+                        resultMap：可以直接饮用 resultMap ID   ofType | resultMap 指定一个即可
+                        select：分步查询
+                        column：分步查询指定参数
+
+
+       -->
+    <resultMap id="EmployeeInfo1" type="dynamicsql.entity.Employee">
+        <id property="id" column="id"></id>
+        <result property="lastName" column="lastName" jdbcType="VARCHAR" javaType="string"></result>
+        <result property="email" column="email" jdbcType="VARCHAR"></result>
+        <result property="gender" column="gender" jdbcType="INTEGER"></result>
+        <result property="dept.id" column="did"></result>
+        <result property="dept.deptName" column="dept_name"/>
+    </resultMap>
+
+    <resultMap id="EmployeeInfo2" type="dynamicsql.entity.Employee" >
+        <id column="id" property="id" />
+        <result column="lastName" property="lastName" />
+        <result column="email" property="email" />
+        <result column="gender" property="gender" />
+
+<!--   直接配置级联属性     -->
+<!--        <association property="dept" javaType="mapper.entity.Department"  >-->
+<!--            <id column="did" property="id"/>-->
+<!--            <result column="dept_name" property="deptName" />-->
+<!--        </association>-->
+
+            <!-- 使用 association 的 resultMap 来绑定级联属性        -->
+<!--        <association property="dept" resultMap="mapper.mapper.DepartmentMapper.deptInfo"></association> -->
+
+    </resultMap>
+
+    <resultMap id="EmployeeInfo3" type="dynamicsql.entity.Employee">
+        <id property="id" column="id"></id>
+        <result property="lastName" column="lastName" jdbcType="VARCHAR" javaType="string"></result>
+        <result property="email" column="email" jdbcType="VARCHAR"></result>
+        <result property="gender" column="gender" jdbcType="INTEGER"></result>
+        <!-- 使用 association 的 分步查询 select 绑定级联属性  column="{id=did}"   -->
+        <association property="dept" select="dynamicsql.mapper.DepartmentMapper.getById" column="{id=d_id}"></association>
+    </resultMap>
+
+    <select id="getById" resultMap="EmployeeInfo2">
+        select e.id,e.lastName,e.email,e.gender,d.id dId,d.dept_name from employee e ,department d
+                where e.d_id=d.id and e.id=#{id}
+    </select>
+
+    <select id="getInfoByStep"  resultMap="EmployeeInfo3">
+        select * from employee where id=#{id}
+    </select>
+
+    <select id="queryEmpsByDeptId" resultType="dynamicsql.entity.Employee">
+        select * from employee where d_id=#{id}
+    </select>
+
+
+
+    <select id="getEmpMap" resultType="map">
+        select * from employee where id=#{id}
+    </select>
+
+    <select id="queryEmpsForMap" resultType="dynamicsql.entity.Employee" >
+        select * from employee
+    </select>
+</mapper>

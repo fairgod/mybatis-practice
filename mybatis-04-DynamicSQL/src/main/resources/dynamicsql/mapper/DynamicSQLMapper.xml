@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--  指定所绑定的接口引用路径  -->
+<mapper namespace="dynamicsql.mapper.DynamicSQLMapper">
+
+    <!--
+        mybatis 中的动态 SQL 中使用的时 OGNL 表达式.
+
+        <if></if> 属性（test）：如果条件成立，才会输出标签体中的内容
+        <where></where>：可以去掉 where 条件中 的第一个 and 。ex： and lastName=''
+                            无法去掉 条件后面的 and 。  ex： lastName='' and
+       -->
+    <select id="queryEmpsByCondition" resultType="dynamicsql.entity.Employee">
+        select * from employee
+        <where>
+            <if test="id!=null">
+                id=#{id}
+            </if>
+            <if test="lastName!=null">
+                and lastName like #{lastName}
+            </if>
+            <if test="gender neq null">
+                and gender = #{gender}
+            </if>
+            <if test="dId neq null">
+                and d_id=#{dId}
+            </if>
+        </where>
+    </select>
+
+
+    <!--
+        trim：可以根据条件添加前缀、后缀、去掉前缀、去掉后缀
+            prefix：在 SQL 中添加前缀
+            prefixOverrides：将指定的值，从 SQL 前缀中去掉
+            suffix：给 SQL 添加后缀
+            suffixOverrides：将指定的值，从 SQL 后缀中去掉
+      -->
+    <select id="queryEmpsByConditionTrim" resultType="dynamicsql.entity.Employee">
+        select * from employee
+        <trim prefix="where " suffixOverrides="and">
+            <if test="id!=null">
+                id=#{id} and
+            </if>
+            <if test="lastName!=null">
+                lastName like #{lastName} and
+            </if>
+            <if test="gender neq null">
+                gender = #{gender} and
+            </if>
+            <if test="dId neq null">
+                and d_id=#{dId} and
+            </if>
+        </trim>
+    </select>
+
+
+    <!--
+        set：可以将最后的一个逗号去掉
+
+      -->
+
+    <update id="updateUseSet">
+        update employee
+        <set>
+            <if test="lastName neq null">
+                lastName=#{lastName} ,
+            </if>
+
+            <if test="gender neq null">
+                gender=#{gender} ,
+            </if>
+
+            <if test="email neq null">
+                email=#{email} ,
+            </if>
+
+            <if test="dId neq null">
+                d_Id=#{dId}
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+
+    <!--
+        使用 choose  when  otherwise 标签  和 java中的 switch case default 用法相似
+      -->
+    <select id="queryEmpsByConditionChoose" resultType="dynamicsql.entity.Employee">
+        select * from employee
+        <where>
+
+
+                <choose>
+                    <when test="id != null">
+                        id = #{id}
+                    </when>
+                    <when test="lastName  != null">
+                        lastname=#{lastName}
+                    </when>
+                    <otherwise>
+                        gender=0
+                    </otherwise>
+                </choose>
+
+        </where>
+    </select>
+
+</mapper>
