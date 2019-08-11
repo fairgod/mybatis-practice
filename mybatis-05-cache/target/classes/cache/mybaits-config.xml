@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+    <!--   引入外部文件   -->
+    <properties resource="jdbc.properties"></properties>
+    <settings>
+        <!--    开启映射器中设置的缓存    -->
+        <setting name="cacheEnabled" value="true"/>
+        <!--    开启骆驼命名    -->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        <!--    开启延迟加载功能，select 标签中的 fetchType 可以覆盖该属性    -->
+        <setting name="lazyLoadingEnabled" value="true"/>
+
+        <setting name="aggressiveLazyLoading" value="false"/>
+        <!--       localCacheScope：一级缓存的作用域  STATEMENT：禁用一级缓存     -->
+        <!--        <setting name="localCacheScope" value="STATEMENT"/>-->
+    </settings>
+
+    <!--   别名处理器   -->
+    <typeAliases>
+        <!--   可以为某个类，指定别名      -->
+        <!--        <typeAlias type="cache.entity.Employee" alias="emp" />-->
+        <!--    直接为某个包下的所有的类，指定别名，默认名：类的名称，不区分大小写    -->
+        <package name="cache.entity"/>
+    </typeAliases>
+
+    <!-- 环境配置   -->
+    <environments default="dev">
+        <!--    具体的环境配置实例    -->
+        <environment id="dev">
+            <!--      事务管理器你  使用 JDBC 来管理事务      -->
+            <transactionManager type="JDBC"></transactionManager>
+            <!--      数据源 POOLED 使用连接池     -->
+            <dataSource type="POOLED">
+                <property name="driver" value="${mysql.dev.driver}"/>
+                <property name="url" value="${mysql.dev.url}"/>
+                <property name="username" value="${mysql.dev.username}"/>
+                <property name="password" value="${mysql.dev.password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <!--  数据库厂商标识  -->
+    <databaseIdProvider type="DB_VENDOR">
+        <property name="MySQL" value="mysql"/>
+    </databaseIdProvider>
+
+    <mappers>
+        <package name="cache.mapper"/>
+    </mappers>
+</configuration>

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--  指定所绑定的接口引用路径  -->
+<mapper namespace="cache.mapper.EmployeeMapper">
+
+    <!--
+        blocking="" eviction="" flushInterval="" readOnly="" size="" type=""
+        enviction：使用哪种回收策略：默认为 LRU
+            LRU – 最近最少使用：移除最长时间不被使用的对象。
+            FIFO – 先进先出：按对象进入缓存的顺序来移除它们。
+            SOFT – 软引用：基于垃圾回收器状态和软引用规则移除对象。
+            WEAK – 弱引用：更积极地基于垃圾收集器状态和弱引用规则移除对象。
+
+        flushInterval：缓存刷新时间间隔。默认为不刷新。毫秒为单位
+        readOnly：缓存数据是否只读 true | false
+                只读（true）：mybatis 会将缓存的对象的引用直接给用户，效率会有可观的提升。因为直接返回的是引用
+                                所以速度快、但是不安全。
+                读写（false）：mybatis 会通过反序列化机制将缓存克隆一份返回给用户，效率稍慢，但是数据安全，所以为 mybatis 的 默认值
+        size：缓存的个数，默认为1024
+        type：可以指定自定义缓存的全类名
+    -->
+    <cache eviction="LRU" flushInterval="60000" readOnly="false" size="1024" ></cache>
+
+    <!--  数据 mybatis-config.xml 中指定了明确的 databaseIdProvider
+                    优先加载明确标识的 databaseId 的标签，如果没有则才会加载默认不带 databaseId 的标签  -->
+    <select id="selectEmployeeById" resultType="emp">
+        select id,lastName,i_id from Employee where id = #{id}
+    </select>
+
+
+    <select id="selectEmployeeById" resultType="emp" databaseId="mysql">
+        select * from Employee where id = #{id}
+
+    </select>
+
+    <!--  mybatis 中多个参数时，如果不通过 @Param 注解指定参数的名称时，
+                默认会使用：param1，param2 来作为参数的名称，
+                即使通过 @Param 注解指定了参数的名称依然可以使用，mybatis默认提供的 param1...来获取参数
+           如果是多个参数经常使用，建议创建 TO(Transfer Object) 来作为参数，也可以直接创建一个 Map 作为参数
+
+          -->
+    <select id="selectByIdAndLastName" resultType="emp" databaseId="mysql">
+        select * from Employee where id = ${param1} and lastName=#{param2}
+
+    </select>
+
+    <!--
+           mybatis 将 map 中的 key 作为参数的名称
+     -->
+    <select id="selectByMap" resultType="emp" databaseId="mysql">
+        select * from Employee where id = #{id} and lastName=#{lastName}
+
+    </select>
+
+
+    <!--
+         mybatis 会对 Collection（List，Set）类型作为参数时，做特殊处理，会把传入的参数封装到 map 中
+         设置参数的 key： Collection（collection），List（list），Array（array）
+
+         List<Employee> selectByIds(List<Integer> ids) 取出第一个参数：#{list[0]}
+
+         可以结合源码( ParamNameResolver ) mybatis 如何处理参数类型
+
+
+             public Object getNamedParams(Object[] args) {
+                    int paramCount = this.names.size();
+                    if (args != null && paramCount != 0) {
+                        if (!this.hasParamAnnotation && paramCount == 1) {
+                            return args[(Integer)this.names.firstKey()];
+                        } else {
+                            Map<String, Object> param = new ParamMap();
+                            int i = 0;
+
+                            for(Iterator var5 = this.names.entrySet().iterator(); var5.hasNext(); ++i) {
+                                Entry<Integer, String> entry = (Entry)var5.next();
+                                param.put((String)entry.getValue(), args[(Integer)entry.getKey()]);
+                                String genericParamName = "param" + String.valueOf(i + 1);
+                                if (!this.names.containsValue(genericParamName)) {
+                                    param.put(genericParamName, args[(Integer)entry.getKey()]);
+                                }
+                            }
+
+                            return param;
+                        }
+                    } else {
+                        return null;
+                    }
+                }
+
+      -->
+
+    <select id="selectByIds" resultType="emp" databaseId="mysql">
+        select * from Employee /*where id in ( 可以直接写在 open 中*/
+        <foreach collection="list" separator="," item="e" open="where id in (" close=")">
+            #{e}
+        </foreach>
+
+    </select>
+
+
+    <!--
+        insert / update / delete 基本非常接近 只列举部分属性：
+            parameterType：传入的参数的类型的全类名或者别名
+            flushCache：将其设置为 true 后，只要语句被调用，都会导致本地缓存和二级缓存被清空，
+                            默认值：true（对于 insert、update 和 delete 语句）。
+            statementType：STATEMENT，PREPARED 或 CALLABLE 的一个。
+                            这会让 MyBatis 分别使用 Statement，PreparedStatement 或 CallableStatement，默认值：PREPARED。
+            useGeneratedKeys：仅对（update/insert）有用，对于这会令 MyBatis 使用 JDBC 的 getGeneratedKeys 方法来取出由数据库内部
+                            生成的主键（比如：像 MySQL 和 SQL Server 这样的关系数据库管理系统的自动递增字段），默认值：false。
+            keyProperty：自动生成的主键，赋值给哪个属性，如果多个属性，则指定多个使用逗号隔开
+            keyColumn：自动生成哪个列，默认不用指定，如果生成主键不是表的第一列，则需要指定，多个列则指定多个使用逗号隔开
+            databaseId：如果配置了数据库厂商标识（databaseIdProvider），MyBatis 会加载所有的不带 databaseId
+                            或匹配当前 databaseId 的语句；如果带或者不带的语句都有，则不带的会被忽略。
+
+      -->
+    <insert id="save" useGeneratedKeys="true" keyProperty="id">
+        insert into employee(lastName,gender,email,d_id)
+        values( #{lastName},#{gender},#{email},#{dId})
+    </insert>
+
+
+    <!--
+        强烈不推荐使用 ， 想了解的可以看一下。
+            有的数据库不支持，自增列，可以使用这种嵌套查询 selectKey 作为主键
+         selectKey：Mybatis 为了保证灵活性，不得已添加的这种设置 ID 主键的方式
+            keyColumn：查询语句返回的那个列作为结果
+            keyProperty：结果填充的字段。
+            order：BEFORE（在添加之前） AFTER（在添加之后）
+            resultType：设置返回结果类型一定要指定，否则可能会出错（integer，string等）
+      -->
+    <insert id="insertGeneratedIdBySelect">
+        <selectKey keyColumn="id" keyProperty="id" order="BEFORE" resultType="integer">
+
+            select max(id)+10 id from Employee
+        </selectKey>
+        insert into employee(id,lastName,gender,email,d_id)
+        values( #{id},#{lastName},#{gender},#{email},#{dId})
+    </insert>
+
+
+    <!--  支持 mysql 等数据库的批量插入
+           参数名称需要由：@Param("emps") 来指定
+      -->
+    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="id">
+        insert into employee(lastName,gender,email,d_id)
+        <foreach collection="emps" item="e" separator="," open="values">
+            ( #{e.lastName},#{e.gender},#{e.email},#{e.dId})
+        </foreach>
+    </insert>
+
+    <update id="update">
+        update employee set
+        lastName=#{lastName} , gender=#{gender} ,email=#{email} , d_Id=#{dId}
+        where id=#{id}
+    </update>
+
+    <select id="selectAll" resultType="emp" useCache="true">
+        select *  from employee
+    </select>
+
+</mapper>
